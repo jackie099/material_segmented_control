@@ -282,11 +282,9 @@ class _SegmentedControlState<T> extends State<MaterialSegmentedControl<T>>
   }
 
   void _onTap(T currentKey) {
-    print("tapping");
     print(currentKey != widget.selectionIndex);
     print(currentKey == _pressedKey);
     if (currentKey != widget.selectionIndex && currentKey == _pressedKey) {
-      print("tapped");
       widget.onSegmentChosen?.call(currentKey);
       _pressedKey = null;
     }
