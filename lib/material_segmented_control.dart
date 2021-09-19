@@ -2,6 +2,7 @@ library material_segmented_control;
 
 import 'dart:math' as math;
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -54,6 +55,8 @@ class MaterialSegmentedControl<T> extends StatefulWidget {
     this.disabledColor = _kDisabledDefaultColor,
     this.unselectedColor = _kUnselectedDefaultColor,
     this.horizontalPadding = _horizontalPadding,
+    this.isCupertinoStyle = false,
+    this.strokeWidth = 0.7,
   })  : assert(children.length >= 1),
         assert(
           selectionIndex == null ||
@@ -119,6 +122,12 @@ class MaterialSegmentedControl<T> extends StatefulWidget {
   /// Define the children to disable.
   /// Giving an empty list or null enables all children.
   final List<T>? disabledChildren;
+
+  /// Change style to Cupertino
+  final bool isCupertinoStyle;
+
+  /// Stroke width of border
+  final double strokeWidth;
 
   @override
   _SegmentedControlState<T> createState() => _SegmentedControlState<T>();
@@ -273,7 +282,11 @@ class _SegmentedControlState<T> extends State<MaterialSegmentedControl<T>>
   }
 
   void _onTap(T currentKey) {
+    print("tapping");
+    print(currentKey != widget.selectionIndex);
+    print(currentKey == _pressedKey);
     if (currentKey != widget.selectionIndex && currentKey == _pressedKey) {
+      print("tapped");
       widget.onSegmentChosen?.call(currentKey);
       _pressedKey = null;
     }
@@ -324,34 +337,50 @@ class _SegmentedControlState<T> extends State<MaterialSegmentedControl<T>>
             child: widget.children[currentKey]),
       );
 
-      child = InkWell(
-        splashColor: widget.selectedColor.withOpacity(0.185),
-        highlightColor: widget.selectedColor.withOpacity(0.4),
-        borderRadius: _calculateBorderRadius(index),
-        onTapDown: checkDisabledChild
-            ? null
-            : (TapDownDetails event) {
-                _onTapDown(currentKey);
-              },
-        onTapCancel: checkDisabledChild ? null : _onTapCancel,
-        onTap: checkDisabledChild
-            ? null
-            : () {
-                _onTap(currentKey);
-              },
-        child: IconTheme(
-          data: iconTheme,
-          child: DefaultTextStyle(
-            style: textStyle,
-            child: Semantics(
-              button: true,
-              inMutuallyExclusiveGroup: true,
-              selected: widget.selectionIndex == currentKey,
-              child: child,
-            ),
+      Widget contentChild = IconTheme(
+        data: iconTheme,
+        child: DefaultTextStyle(
+          style: textStyle,
+          child: Semantics(
+            button: true,
+            inMutuallyExclusiveGroup: true,
+            selected: widget.selectionIndex == currentKey,
+            child: child,
           ),
         ),
       );
+
+      if (widget.isCupertinoStyle) {
+        child = CupertinoButton(
+          borderRadius: _calculateBorderRadius(index),
+          padding: EdgeInsets.zero,
+          child: contentChild,
+          onPressed: checkDisabledChild
+              ? null
+              : () {
+                  _onTapDown(currentKey);
+                  _onTap(currentKey);
+                },
+        );
+      } else {
+        child = InkWell(
+          splashColor: widget.selectedColor.withOpacity(0.185),
+          highlightColor: widget.selectedColor.withOpacity(0.4),
+          borderRadius: _calculateBorderRadius(index),
+          onTapDown: checkDisabledChild
+              ? null
+              : (TapDownDetails event) {
+                  _onTapDown(currentKey);
+                },
+          onTapCancel: checkDisabledChild ? null : _onTapCancel,
+          onTap: checkDisabledChild
+              ? null
+              : () {
+                  _onTap(currentKey);
+                },
+          child: contentChild,
+        );
+      }
 
       _backgroundColors.add(checkDisabledChild
           ? widget.disabledColor
@@ -367,6 +396,7 @@ class _SegmentedControlState<T> extends State<MaterialSegmentedControl<T>>
       backgroundColors: _backgroundColors,
       borderColor: _borderColor,
       borderRadius: widget.borderRadius,
+      strokeWidth: widget.strokeWidth,
     );
 
     return Material(
@@ -409,6 +439,7 @@ class _SegmentedControlRenderWidget<T> extends MultiChildRenderObjectWidget {
     required this.backgroundColors,
     required this.borderColor,
     required this.borderRadius,
+    required this.strokeWidth,
   }) : super(
           key: key,
           children: children,
@@ -419,6 +450,7 @@ class _SegmentedControlRenderWidget<T> extends MultiChildRenderObjectWidget {
   final List<Color?> backgroundColors;
   final Color? borderColor;
   final double borderRadius;
+  final double strokeWidth;
 
   @override
   RenderObject createRenderObject(BuildContext context) {
@@ -429,6 +461,7 @@ class _SegmentedControlRenderWidget<T> extends MultiChildRenderObjectWidget {
       backgroundColors: backgroundColors,
       borderColor: borderColor,
       borderRadius: borderRadius,
+      strokeWidth: strokeWidth,
     );
   }
 
@@ -465,7 +498,9 @@ class _RenderSegmentedControl<T> extends RenderBox
     required List<Color?> backgroundColors,
     required Color? borderColor,
     required double borderRadius,
-  })   : _textDirection = textDirection,
+    required double strokeWidth,
+  })  : _textDirection = textDirection,
+        _strokeWidth = strokeWidth,
         _selectedIndex = selectedIndex,
         _pressedIndex = pressedIndex,
         _backgroundColors = backgroundColors,
@@ -475,8 +510,11 @@ class _RenderSegmentedControl<T> extends RenderBox
   }
 
   double _borderRadius;
+  double _strokeWidth;
+
   int? get selectedIndex => _selectedIndex;
   int? _selectedIndex;
+
   set selectedIndex(int? value) {
     if (_selectedIndex == value) {
       return;
@@ -487,6 +525,7 @@ class _RenderSegmentedControl<T> extends RenderBox
 
   int? get pressedIndex => _pressedIndex;
   int? _pressedIndex;
+
   set pressedIndex(int? value) {
     if (_pressedIndex == value) {
       return;
@@ -497,6 +536,7 @@ class _RenderSegmentedControl<T> extends RenderBox
 
   TextDirection get textDirection => _textDirection;
   TextDirection _textDirection;
+
   set textDirection(TextDirection value) {
     if (_textDirection == value) {
       return;
@@ -507,6 +547,7 @@ class _RenderSegmentedControl<T> extends RenderBox
 
   List<Color?> get backgroundColors => _backgroundColors;
   List<Color?> _backgroundColors;
+
   set backgroundColors(List<Color?> value) {
     if (_backgroundColors == value) {
       return;
@@ -517,6 +558,7 @@ class _RenderSegmentedControl<T> extends RenderBox
 
   Color? get borderColor => _borderColor;
   Color? _borderColor;
+
   set borderColor(Color? value) {
     if (_borderColor == value) {
       return;
@@ -688,14 +730,14 @@ class _RenderSegmentedControl<T> extends RenderBox
     RenderBox? child = firstChild;
     int index = 0;
     while (child != null) {
-      _paintChild(context, offset, child, index);
+      _paintChild(context, offset, child, index, _strokeWidth);
       child = childAfter(child);
       index += 1;
     }
   }
 
-  void _paintChild(
-      PaintingContext context, Offset offset, RenderBox child, int childIndex) {
+  void _paintChild(PaintingContext context, Offset offset, RenderBox child,
+      int childIndex, double strokeWidth) {
     final _SegmentedControlContainerBoxParentData childParentData =
         child.parentData as _SegmentedControlContainerBoxParentData;
 
@@ -709,7 +751,7 @@ class _RenderSegmentedControl<T> extends RenderBox
       childParentData.surroundingRect.shift(offset),
       Paint()
         ..color = borderColor!
-        ..strokeWidth = 0.7
+        ..strokeWidth = strokeWidth
         ..style = PaintingStyle.stroke,
     );
 

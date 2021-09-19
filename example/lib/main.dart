@@ -25,6 +25,8 @@ class _MyAppState extends State<MyApp> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               MaterialSegmentedControl(
+                strokeWidth: 2,
+                isCupertinoStyle: true,
                 children: _children,
                 selectionIndex: _currentSelection,
                 borderColor: Colors.grey,
