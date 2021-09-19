@@ -350,6 +350,7 @@ class _SegmentedControlState<T> extends State<MaterialSegmentedControl<T>>
 
       if (widget.isCupertinoStyle) {
         child = CupertinoButton(
+          minSize: 40,
           borderRadius: _calculateBorderRadius(index),
           padding: EdgeInsets.zero,
           child: contentChild,
